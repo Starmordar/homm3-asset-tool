@@ -1,0 +1,8 @@
+---
+BasedOnStyle: LLVM
+AllowShortFunctionsOnASingleLine: InlineOnly
+ColumnLimit: 100
+DerivePointerAlignment: false
+NamespaceIndentation: All
+BinPackParameters: false
+---

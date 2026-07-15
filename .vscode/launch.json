@@ -1,0 +1,14 @@
+{
+  "configurations": [
+    {
+        "name": "LLDB Plugin Launch",
+        "type": "lldb",
+        "request": "launch",
+        "program": "${command:cmake.launchTargetPath}",
+        "cwd": "${workspaceFolder}",
+        "console": "integratedTerminal",
+    }   
+  ],
+  "version": "2.0.0"
+}
+

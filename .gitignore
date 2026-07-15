@@ -1,0 +1,4 @@
+/input/**
+/build
+
+.DS_store
