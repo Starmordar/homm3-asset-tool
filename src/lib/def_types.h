@@ -5,8 +5,8 @@
 #include <unordered_set>
 #include <vector>
 
-namespace FileType {
-  inline const std::unordered_set<int> def_types{
+namespace DEF {
+  inline const std::unordered_set<int> allowed_types{
       64, // spell
       65, // spritedef
       66, // creature
@@ -19,7 +19,7 @@ namespace FileType {
       73, // combat hero
   };
 
-  inline const std::unordered_map<uint32_t, std::vector<std::string>> def_groups{
+  inline const std::unordered_map<uint32_t, std::vector<std::string>> animation_groups{
       {66,
        {"moving",         "mouse over", "standing",        "getting hit",         "defend",
         "death",          "???",        "turn left",       "turn right",          "turn left",
@@ -30,4 +30,4 @@ namespace FileType {
        {"turn north", "turn northeast", "turn east", "turn southeast", "turn south", "move north",
         "move northeast", "move east", "move southeast", "move south"}},
       {73, {"standing", "standing", "failure", "success", "spellcasting"}}};
-} // namespace FileType
+} // namespace DEF

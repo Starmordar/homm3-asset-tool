@@ -1,3 +1,5 @@
 {
-    "C_Cpp.errorSquiggles": "enabled"
+    "C_Cpp.errorSquiggles": "enabled",
+    "editor.inlineSuggest.enabled": false,
+    "editor.suggest.showInlineDetails": false,
 }

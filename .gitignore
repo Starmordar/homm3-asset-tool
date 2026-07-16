@@ -1,4 +1,5 @@
 /input/**
 /build
+/output
 
 .DS_store

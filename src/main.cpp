@@ -1,4 +1,4 @@
-#include "./parser/parse-lod.h"
+#include "parser/lod_parser.h"
 #include <iostream>
 
 static std::optional<std::string> critical_error;
@@ -6,7 +6,7 @@ static std::string input_lod_path{"input/H3sprite.lod"};
 
 int init() {
   try {
-    parse_lod_file(input_lod_path);
+    parse_lod(input_lod_path);
   } catch (const std::exception &e) {
     critical_error = e.what();
   }
