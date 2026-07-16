@@ -277,6 +277,11 @@ void parse_def_file(std::vector<uint8_t> &content, uint32_t file_type, char *fil
   std::unordered_map<std::string, std::vector<std::string>> groups{};
   std::unordered_map<std::string, ImageData> images{};
 
+  std::filesystem::path path(file_name);
+  std::string folder_name = path.stem().string();
+
+  std::filesystem::create_directory("input/" + folder_name);
+
   for (size_t i = 0; i < group_count; i++) {
     std::string group_name{get_def_group(file_type, reader.read<uint32_t>())};
     uint32_t frame_count{reader.read<uint32_t>()};
@@ -303,7 +308,7 @@ void parse_def_file(std::vector<uint8_t> &content, uint32_t file_type, char *fil
       auto image_data = parse_image(reader, palette);
       images[frame_names[i]] = image_data;
 
-      std::filesystem::path path{"input/" + frame_names[i]};
+      std::filesystem::path path{"input/" + folder_name + '/' + frame_names[i]};
       path.replace_extension(".png");
 
       stbi_write_png(path.c_str(), image_data.frame_full_width, image_data.frame_full_height, 4,
