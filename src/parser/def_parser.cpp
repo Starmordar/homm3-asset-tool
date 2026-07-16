@@ -250,13 +250,33 @@ namespace {
     return group_path;
   }
 
+  void combine_images_data(std::unordered_map<std::string, ImageData> &images,
+                           std::vector<std::string> &frame_names,
+                           DefHeader &def_header,
+                           fs::path &folder
+
+  ) {
+    std::vector<uint8_t> result;
+    for (size_t i = 0; i < def_header.frame_height; ++i) {
+      for (size_t j = 0; j < frame_names.size(); ++j) {
+        result.insert(
+            result.end(), images[frame_names[j]].raw_data.begin() + def_header.frame_width * i * 4,
+            images[frame_names[j]].raw_data.begin() + def_header.frame_width * (i + 1) * 4);
+      }
+    }
+
+    fs::path path{folder / "sprite.png"};
+
+    stbi_write_png(path.c_str(), def_header.frame_width * frame_names.size(),
+                   def_header.frame_height, 4, result.data(),
+                   def_header.frame_width * frame_names.size() * 4);
+  }
+
   void parse_def_groups(BinaryDataView &buffer,
                         DefHeader &def_header,
                         uint32_t file_type,
                         std::string_view def_folder_name) {
     std::vector<Palette::Color> palette{extract_palette(buffer)};
-
-    std::unordered_map<std::string, ImageData> images{};
 
     for (size_t i = 0; i < def_header.group_count; ++i) {
       std::string animation_group_name{get_animation_group_name(file_type, buffer.read_le_ui32())};
@@ -272,6 +292,7 @@ namespace {
 
       fs::path group_path = create_animation_group_folder(def_folder_name, animation_group_name);
 
+      std::unordered_map<std::string, ImageData> images{};
       std::vector<std::string> group_frames{};
       for (size_t i = 0; i < frame_count; i++) {
         group_frames.push_back(frame_names[i]);
@@ -285,14 +306,16 @@ namespace {
         auto image_data = parse_image(buffer, palette);
         images[frame_names[i]] = image_data;
 
-        fs::path path = {group_path / frame_names[i]};
-        path.replace_extension(".png");
+        // fs::path path = {group_path / frame_names[i]};
+        // path.replace_extension(".png");
 
-        stbi_write_png(path.c_str(), def_header.frame_width, def_header.frame_height, 4,
-                       image_data.raw_data.data(), def_header.frame_width * 4);
+        // stbi_write_png(path.c_str(), def_header.frame_width, def_header.frame_height, 4,
+        //                image_data.raw_data.data(), def_header.frame_width * 4);
 
         buffer.seek(start_offset);
       }
+
+      combine_images_data(images, frame_names, def_header, group_path);
     }
   }
 } // namespace
