@@ -4,7 +4,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include "BinaryReader.h"
+#include "BinaryDataView.h"
 #include "file_types.h"
 #include "parse-def.h"
 
@@ -45,12 +45,11 @@ namespace {
   };
 } // namespace
 
-std::vector<Color> get_palette(BinaryReader &reader) {
+std::vector<Color> get_palette(BinaryDataView &buffer) {
   std::vector<Color> palette{};
 
   for (size_t i = 0; i < 256; i++) {
-    palette.push_back(
-        {reader.read<uint8_t>(), reader.read<uint8_t>(), reader.read<uint8_t>(), 255});
+    palette.push_back({buffer.read_ui8(), buffer.read_ui8(), buffer.read_ui8(), 255});
   }
 
   palette[0] = {0, 0, 0, 0};   // Transparency                 (0,255,255)
@@ -80,11 +79,11 @@ std::string get_def_group(uint32_t def_type, uint32_t group_type) {
   return " ";
 }
 
-std::vector<std::string> get_frame_names(BinaryReader &reader, int frame_count) {
+std::vector<std::string> get_frame_names(BinaryDataView &buffer, int frame_count) {
   std::vector<std::string> frame_names{};
 
   for (size_t i = 0; i < frame_count; i++) {
-    std::string name = reader.read_string(frame_name_length);
+    std::string name = buffer.read_string(frame_name_length);
 
     if (name.find('\0') != std::string::npos) // Clear null terminated strings
       name.resize(frame_name_length - 1);
@@ -95,68 +94,68 @@ std::vector<std::string> get_frame_names(BinaryReader &reader, int frame_count) 
   return frame_names;
 }
 
-std::vector<uint32_t> get_frame_offsets(BinaryReader &reader, int frame_count) {
+std::vector<uint32_t> get_frame_offsets(BinaryDataView &buffer, int frame_count) {
   std::vector<uint32_t> frame_offsets{};
 
   for (size_t i = 0; i < frame_count; i++) {
-    frame_offsets.push_back(reader.read<uint32_t>());
+    frame_offsets.push_back(buffer.read_le_ui32());
   }
 
   return frame_offsets;
 }
 
-std::vector<uint32_t> get_image_sizes(BinaryReader &reader, std::vector<uint32_t> &offsets) {
+std::vector<uint32_t> get_image_sizes(BinaryDataView &buffer, std::vector<uint32_t> &offsets) {
   std::vector<uint32_t> sizes{};
 
   for (size_t i = 0; i < offsets.size(); ++i) {
-    reader.seek(offsets[i]);
-    sizes.push_back(reader.read<uint32_t>() + 32);
+    buffer.seek(offsets[i]);
+    sizes.push_back(buffer.read_le_ui32() + 32);
   }
 
   return sizes;
 }
 
-ImageData parse_image(BinaryReader &reader, std::vector<Color> &palette) {
+ImageData parse_image(BinaryDataView &buffer, std::vector<Color> &palette) {
   struct ImageData image{};
 
   static bool passed = false;
 
-  uint32_t size = reader.read<uint32_t>();
-  uint32_t format = reader.read<uint32_t>(); // format in which pixel data is stores
+  uint32_t size = buffer.read_le_ui32();
+  uint32_t format = buffer.read_le_ui32(); // format in which pixel data is stores
 
-  image.frame_full_width = reader.read<uint32_t>();  // full width of frame including border
-  image.frame_full_height = reader.read<uint32_t>(); // full height of frame including border
+  image.frame_full_width = buffer.read_le_ui32();  // full width of frame including border
+  image.frame_full_height = buffer.read_le_ui32(); // full height of frame including border
 
-  image.width = reader.read<uint32_t>();  // width of pixel data without borders
-  image.height = reader.read<uint32_t>(); // height of pixel data without borders
-  image.x = reader.read<uint32_t>();      // left margin
-  image.y = reader.read<uint32_t>();      // top margin
+  image.width = buffer.read_le_ui32();  // width of pixel data without borders
+  image.height = buffer.read_le_ui32(); // height of pixel data without borders
+  image.x = buffer.read_le_ui32();      // left margin
+  image.y = buffer.read_le_ui32();      // top margin
 
-  const auto base_offset = reader.tell();
+  const auto base_offset = buffer.tell();
   auto current = base_offset;
   std::vector<uint8_t> palette_indices{};
 
   // data is not encoded, store as is
   if (format == 0) {
-    reader.loop(image.height * image.width, palette_indices);
+    buffer.loop(image.height * image.width, palette_indices);
   }
   // Run-length encoding rows, used by most creature C*.def files
   // height * uint32 offsets, 0xFF segment_type means raw pixel data,
   // otherwise RLE encoded colors
   else if (format == 1) {
-    std::vector<uint32_t> offsets = reader.loop<uint32_t>(image.height);
+    std::vector<uint32_t> offsets = buffer.loop<uint32_t>(image.height);
 
     for (size_t i = 0; i < offsets.size(); ++i) {
-      reader.seek(base_offset + offsets[i]);
+      buffer.seek(base_offset + offsets[i]);
 
       uint32_t total_row_length = 0;
       while (total_row_length < image.width) {
-        uint8_t segment_type = reader.read<uint8_t>();
-        uint32_t segment_length = reader.read<uint8_t>() + 1;
+        uint8_t segment_type = buffer.read_ui8();
+        uint32_t segment_length = buffer.read_ui8() + 1;
 
         if (segment_type == format_1_RLE_first_byte) {
           // store segment raw data
-          reader.loop<uint8_t>(segment_length, palette_indices);
+          buffer.loop<uint8_t>(segment_length, palette_indices);
         } else {
           // in this case segment_type is a color index, store it segment_length times
           palette_indices.insert(palette_indices.end(), segment_length, segment_type);
@@ -170,20 +169,20 @@ ImageData parse_image(BinaryReader &reader, std::vector<Color> &palette) {
   // height * uint16 offsets, keeps single byte to store both segment_type and length information
   // 3 bits is for the segment type, 5 bits for it length, so 2^5 (32 pixel) blocks
   else if (format == 2) {
-    uint16_t currect_offset = reader.read<uint16_t>();
-    reader.seek(base_offset + currect_offset);
+    uint16_t currect_offset = buffer.read_le_ui16();
+    buffer.seek(base_offset + currect_offset);
 
     for (size_t i = 0; i < image.height; ++i) {
       uint32_t total_row_length = 0;
 
       while (total_row_length < image.width) {
-        uint8_t segment = reader.read<uint8_t>();
+        uint8_t segment = buffer.read_ui8();
         uint8_t segment_type = segment >> 5;         // get 3 first bits
         uint8_t segment_length = (segment & 31) + 1; // get last 5 bits
 
         if (segment_type == format_2_RLE_first_byte) {
           // store segment raw data
-          reader.loop<uint8_t>(segment_length, palette_indices);
+          buffer.loop<uint8_t>(segment_length, palette_indices);
         } else {
           // similar to format 1, segment_type is a color index, store it segment_length times
           palette_indices.insert(palette_indices.end(), segment_length, segment_type);
@@ -198,20 +197,20 @@ ImageData parse_image(BinaryReader &reader, std::vector<Color> &palette) {
   else if (format == 3) {
     for (size_t i = 0; i < image.height; ++i) {
       // Jump to the offset address, offset is 16 bits, so i * 2 applied
-      reader.seek(base_offset + i * 2 * (image.width / 32));
-      uint16_t current_offset = reader.read<uint16_t>();
-      reader.seek(base_offset + current_offset);
+      buffer.seek(base_offset + i * 2 * (image.width / 32));
+      uint16_t current_offset = buffer.read_le_ui16();
+      buffer.seek(base_offset + current_offset);
 
       uint32_t total_row_length = 0;
 
       while (total_row_length < image.width) {
-        uint8_t segment = reader.read<uint8_t>();
+        uint8_t segment = buffer.read_ui8();
         uint8_t segment_type = segment >> 5;         // get 3 first bits
         uint8_t segment_length = (segment & 31) + 1; // get last 5 bits
 
         if (segment_type == format_2_RLE_first_byte) {
           // store segment raw data
-          reader.loop<uint8_t>(segment_length, palette_indices);
+          buffer.loop<uint8_t>(segment_length, palette_indices);
         } else {
           // similar to format 1, segment_type is a color index, store it segment_length times
           palette_indices.insert(palette_indices.end(), segment_length, segment_type);
@@ -266,14 +265,14 @@ ImageData parse_image(BinaryReader &reader, std::vector<Color> &palette) {
 }
 
 void parse_def_file(std::vector<uint8_t> &content, uint32_t file_type, char *file_name) {
-  BinaryReader reader{content};
-  uint32_t def_type = reader.read<uint32_t>();
-  uint32_t width = reader.read<uint32_t>();
-  uint32_t height = reader.read<uint32_t>();
+  BinaryDataView buffer{content};
+  uint32_t def_type = buffer.read_le_ui32();
+  uint32_t width = buffer.read_le_ui32();
+  uint32_t height = buffer.read_le_ui32();
 
-  uint32_t group_count = reader.read<uint32_t>();
+  uint32_t group_count = buffer.read_le_ui32();
 
-  std::vector<Color> palette{get_palette(reader)};
+  std::vector<Color> palette{get_palette(buffer)};
   std::unordered_map<std::string, std::vector<std::string>> groups{};
   std::unordered_map<std::string, ImageData> images{};
 
@@ -283,16 +282,16 @@ void parse_def_file(std::vector<uint8_t> &content, uint32_t file_type, char *fil
   std::filesystem::create_directory("input/" + folder_name);
 
   for (size_t i = 0; i < group_count; i++) {
-    std::string group_name{get_def_group(file_type, reader.read<uint32_t>())};
-    uint32_t frame_count{reader.read<uint32_t>()};
-    reader.skip(8); // unknown
+    std::string group_name{get_def_group(file_type, buffer.read_le_ui32())};
+    uint32_t frame_count{buffer.read_le_ui32()};
+    buffer.skip(8); // unknown
 
-    std::vector<std::string> frame_names{get_frame_names(reader, frame_count)};
-    std::vector<uint32_t> frame_offsets{get_frame_offsets(reader, frame_count)};
+    std::vector<std::string> frame_names{get_frame_names(buffer, frame_count)};
+    std::vector<uint32_t> frame_offsets{get_frame_offsets(buffer, frame_count)};
 
-    const auto current = reader.tell();
-    std::vector<uint32_t> image_sizes{get_image_sizes(reader, frame_offsets)};
-    reader.seek(current);
+    const auto current = buffer.tell();
+    std::vector<uint32_t> image_sizes{get_image_sizes(buffer, frame_offsets)};
+    buffer.seek(current);
 
     std::vector<std::string> &group_frames = groups[group_name];
 
@@ -302,10 +301,10 @@ void parse_def_file(std::vector<uint8_t> &content, uint32_t file_type, char *fil
       if (images.contains(frame_names[i]))
         continue;
 
-      const auto current = reader.tell();
-      reader.seek(frame_offsets[i]);
+      const auto current = buffer.tell();
+      buffer.seek(frame_offsets[i]);
 
-      auto image_data = parse_image(reader, palette);
+      auto image_data = parse_image(buffer, palette);
       images[frame_names[i]] = image_data;
 
       std::filesystem::path path{"input/" + folder_name + '/' + frame_names[i]};
@@ -314,7 +313,7 @@ void parse_def_file(std::vector<uint8_t> &content, uint32_t file_type, char *fil
       stbi_write_png(path.c_str(), image_data.frame_full_width, image_data.frame_full_height, 4,
                      image_data.raw_data.data(), image_data.frame_full_width * 4);
 
-      reader.seek(current);
+      buffer.seek(current);
     }
   }
 }

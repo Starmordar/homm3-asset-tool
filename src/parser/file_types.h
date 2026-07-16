@@ -1,6 +1,9 @@
 #pragma once
 
+#include <string>
+#include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 namespace FileType {
   inline const std::unordered_set<int> def_types{

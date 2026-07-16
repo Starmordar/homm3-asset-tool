@@ -7,7 +7,7 @@ set(
         src/main.cpp
         src/parser/parse-lod.cpp
         src/parser/parse-def.cpp
-        src/parser/BinaryReader.cpp
+        src/parser/BinaryDataView.cpp
 )
 
 set(
@@ -15,10 +15,10 @@ set(
         src/parser/file_types.h
         src/parser/parse-lod.h
         src/parser/parse-def.h
-        src/parser/BinaryReader.h
+        src/parser/BinaryDataView.h
 )
  
-set (CMAKE_CXX_STANDARD 20)
+set (CMAKE_CXX_STANDARD 23)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(ZLIB REQUIRED)
