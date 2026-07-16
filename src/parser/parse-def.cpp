@@ -31,6 +31,9 @@ namespace {
   };
 
   struct ImageData {
+    uint32_t frame_full_width;
+    uint32_t frame_full_height;
+
     uint32_t width;
     uint32_t height;
 
@@ -121,8 +124,8 @@ ImageData parse_image(BinaryReader &reader, std::vector<Color> &palette) {
   uint32_t size = reader.read<uint32_t>();
   uint32_t format = reader.read<uint32_t>(); // format in which pixel data is stores
 
-  uint32_t full_width = reader.read<uint32_t>();  // full width of frame including border
-  uint32_t full_height = reader.read<uint32_t>(); // full height of frame including border
+  image.frame_full_width = reader.read<uint32_t>();  // full width of frame including border
+  image.frame_full_height = reader.read<uint32_t>(); // full height of frame including border
 
   image.width = reader.read<uint32_t>();  // width of pixel data without borders
   image.height = reader.read<uint32_t>(); // height of pixel data without borders
@@ -220,10 +223,28 @@ ImageData parse_image(BinaryReader &reader, std::vector<Color> &palette) {
   }
 
   std::vector<uint8_t> &bitmap = image.raw_data;
-  for (size_t i = 0; i < palette_indices.size(); i++) {
-    Color rgb_color{palette[palette_indices[i]]};
-    bitmap.insert(bitmap.end(), {rgb_color.r, rgb_color.g, rgb_color.b, rgb_color.a});
+  bitmap.resize(image.frame_full_width * image.frame_full_height * 4, 0);
+
+  for (size_t i = 0; i < image.height; i++) {
+    uint32_t start = (((i + image.y) * image.frame_full_width) + image.x) * 4;
+
+    for (size_t j = 0; j < image.width; j++) {
+      uint32_t index = palette_indices[i * image.width + j];
+      Color rgb_color{palette[index]};
+
+      uint32_t pixel_offset = start + j * 4;
+      bitmap[pixel_offset] = rgb_color.r;
+      bitmap[pixel_offset + 1] = rgb_color.g;
+      bitmap[pixel_offset + 2] = rgb_color.b;
+      bitmap[pixel_offset + 3] = rgb_color.a;
+    }
   }
+
+  // std::vector<uint8_t> &bitmap = image.raw_data;
+  // for (size_t i = 0; i < palette_indices.size(); i++) {
+  //   Color rgb_color{palette[palette_indices[i]]};
+  //   bitmap.insert(bitmap.end(), {rgb_color.r, rgb_color.g, rgb_color.b, rgb_color.a});
+  // }
 
   if (!passed) {
     std::cout << format << '\n';
@@ -285,8 +306,8 @@ void parse_def_file(std::vector<uint8_t> &content, uint32_t file_type, char *fil
       std::filesystem::path path{"input/" + frame_names[i]};
       path.replace_extension(".png");
 
-      stbi_write_png(path.c_str(), image_data.width, image_data.height, 4,
-                     image_data.raw_data.data(), image_data.width * 4);
+      stbi_write_png(path.c_str(), image_data.frame_full_width, image_data.frame_full_height, 4,
+                     image_data.raw_data.data(), image_data.frame_full_width * 4);
 
       reader.seek(current);
     }

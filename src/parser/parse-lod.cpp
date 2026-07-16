@@ -56,7 +56,7 @@ void parse_entry_files(std::ifstream &file_stream, const LodHeader &lod_header) 
     if (!FileType::def_types.contains(entry_header.file_type))
       continue;
 
-    if (std::strcmp(entry_header.name, "AB01_.def"))
+    if (std::strcmp(entry_header.name, "CDDRAG.def"))
       continue;
 
     const auto curr_pos = file_stream.tellg();
