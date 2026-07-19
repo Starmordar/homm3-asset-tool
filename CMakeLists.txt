@@ -8,6 +8,7 @@ set(
         src/parser/lod_parser.cpp
         src/parser/def_parser.cpp
         src/parser/BinaryDataView.cpp
+        src/parser/PcxDecoder.cpp
 )
 
 set(
@@ -18,6 +19,7 @@ set(
         src/parser/lod_parser.h
         src/parser/def_parser.h
         src/parser/BinaryDataView.h
+        src/parser/PcxDecoder.h
 )
  
 set (CMAKE_CXX_STANDARD 23)
