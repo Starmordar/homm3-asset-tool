@@ -4,26 +4,14 @@
 #include <optional>
 #include <vector>
 
+#include "BinaryDataView.h"
+#include "FileFormats.h"
 #include "lib/palette.h"
-#include "parser/BinaryDataView.h"
 
 using PaletteIndices = std::vector<uint8_t>;
+using Image = FileFormats::Def::PcxImage;
 
 class PcxDecoder {
-public:
-  struct Image {
-    uint32_t frame_width;  // full width of frame including border
-    uint32_t frame_height; // full height of frame including border
-
-    uint32_t width;  // width of pixel data without borders
-    uint32_t height; // height of pixel data without borders
-
-    uint32_t x; // left margin
-    uint32_t y; // top margin
-
-    std::vector<uint8_t> bitmap; // pixel data in a RGBA vector
-  };
-
 private:
   enum class COMPRESSION_FORMAT {
     PLAIN = 0,

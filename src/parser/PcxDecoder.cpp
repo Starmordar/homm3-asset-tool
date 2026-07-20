@@ -1,10 +1,11 @@
 #include <cassert>
 
+#include "BinaryDataView.h"
+#include "FileFormats.h"
 #include "PcxDecoder.h"
 #include "lib/palette.h"
-#include "parser/BinaryDataView.h"
 
-using Image = PcxDecoder::Image;
+using Image = FileFormats::Def::PcxImage;
 
 void PcxDecoder::extract_image_meta(BinaryDataView &buffer) {
   image_.frame_width = buffer.read_le_ui32();

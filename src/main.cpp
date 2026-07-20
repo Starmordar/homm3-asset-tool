@@ -1,4 +1,5 @@
-#include "parser/lod_parser.h"
+#include "parser/LodDecoder.h"
+#include "parser/SpriteWriter.h"
 #include <iostream>
 
 static std::optional<std::string> critical_error;
@@ -6,7 +7,11 @@ static std::string input_lod_path{"input/H3sprite.lod"};
 
 int init() {
   try {
-    parse_lod(input_lod_path);
+    LodDecoder lod_decoder{input_lod_path};
+    std::vector<FileFormats::Def::DefFile> def_files = lod_decoder.decode();
+
+    SpriteWriter sprite_writer;
+    sprite_writer.write(def_files);
   } catch (const std::exception &e) {
     critical_error = e.what();
   }

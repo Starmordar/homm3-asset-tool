@@ -5,21 +5,24 @@ project(sprite-extractor)
 set(
     sprite_extractor_SRCS
         src/main.cpp
-        src/parser/lod_parser.cpp
-        src/parser/def_parser.cpp
         src/parser/BinaryDataView.cpp
+        src/parser/LodDecoder.cpp
+        src/parser/DefDecoder.cpp
         src/parser/PcxDecoder.cpp
+        src/parser/SpriteWriter.cpp
 )
 
 set(
     sprite_extractor_HEADERS
         src/lib/aligment.h
         src/lib/palette.h
-        src/lib/def_types.h
-        src/parser/lod_parser.h
-        src/parser/def_parser.h
+        src/lib/file_types.h
+        src/parser/FileFormats.h
         src/parser/BinaryDataView.h
+        src/parser/LodDecoder.h
+        src/parser/DefDecoder.h
         src/parser/PcxDecoder.h
+        src/parser/SpriteWriter.h
 )
  
 set (CMAKE_CXX_STANDARD 23)
