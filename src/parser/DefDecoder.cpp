@@ -60,6 +60,17 @@ std::vector<uint32_t> DefDecoder::get_image_sizes(BinaryDataView &buffer,
   return sizes;
 }
 
+bool DefDecoder::is_legacy_def(BinaryDataView &buffer,
+                               std::vector<uint32_t> &image_sizes,
+                               std::vector<uint32_t> &image_offsets) {
+  for (size_t i = 0; i < image_sizes.size(); i++) {
+    if (image_sizes[i] + image_offsets[i] > buffer.size())
+      return true;
+  }
+
+  return false;
+}
+
 FileFormats::Def::DefFile DefDecoder::decode_animation_groups(BinaryDataView &buffer) {
   FileFormats::Def::DefFile def_file;
 
@@ -78,6 +89,8 @@ FileFormats::Def::DefFile DefDecoder::decode_animation_groups(BinaryDataView &bu
     std::vector<uint32_t> image_sizes{get_image_sizes(buffer, image_offsets)};
     buffer.seek(start_offset);
 
+    bool is_legacy_format = is_legacy_def(buffer, image_sizes, image_offsets);
+
     for (size_t i = 0; i < frame_count; i++) { // Decode each animation group
       def_file.groups[animation_group_name].push_back(image_names[i]);
 
@@ -87,7 +100,7 @@ FileFormats::Def::DefFile DefDecoder::decode_animation_groups(BinaryDataView &bu
       const auto start_offset = buffer.tell();
       buffer.seek(image_offsets[i]);
 
-      PcxDecoder pcx_decoder{palette_};
+      PcxDecoder pcx_decoder{palette_, is_legacy_format};
 
       const FileFormats::Def::PcxImage image = pcx_decoder.decode(buffer);
       def_file.images[image_names[i]] = image;
@@ -120,6 +133,7 @@ void DefDecoder::extract_palette(BinaryDataView &buffer) {
 }
 
 FileFormats::Def::DefFile DefDecoder::decode(FileFormats::Lod::EntryFile &entry_file) {
+  std::cout << "Start decoding for: " << entry_file.header.name << '\n';
   BinaryDataView buffer{entry_file.data};
 
   extract_header_data(buffer);
@@ -128,6 +142,8 @@ FileFormats::Def::DefFile DefDecoder::decode(FileFormats::Lod::EntryFile &entry_
   FileFormats::Def::DefFile def_file = decode_animation_groups(buffer);
   def_file.name = std::string(entry_file.header.name);
   def_file.header = def_header_;
+
+  std::cout << "Finish decoding for: " << entry_file.header.name << '\n';
 
   return def_file;
 }

@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <fstream>
+#include <stdexcept>
 #include <vector>
 
 #include "DefDecoder.h"
@@ -73,7 +74,7 @@ LodDecoder::decode_entries(std::ifstream &stream, const FileFormats::Lod::LodHea
       continue;
 
     // TODO: Remove, temporary for debug
-    if (std::strcmp(entry_file.header.name, "CDDRAG.def"))
+    if (std::strcmp(entry_file.header.name, "SGTWMTA.def"))
       continue;
 
     const auto base_offset = stream.tellg();

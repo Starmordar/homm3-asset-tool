@@ -25,6 +25,7 @@ private:
   static constexpr uint8_t RLE_BLOCK_ORIENTED_first_byte{0x7};
 
   std::vector<Palette::Color> palette_{};
+  bool is_legacy_format_{false};
   Image image_{};
 
   void extract_image_meta(BinaryDataView &buffer);
@@ -48,7 +49,8 @@ private:
   void extract_bitmap(BinaryDataView &buffer, PaletteIndices &palette_indices);
 
 public:
-  explicit PcxDecoder(std::vector<Palette::Color> palette) : palette_(palette) {};
+  explicit PcxDecoder(std::vector<Palette::Color> palette, bool is_legacy_format)
+      : palette_(palette), is_legacy_format_(is_legacy_format) {};
 
   Image decode(BinaryDataView &buffer);
 };

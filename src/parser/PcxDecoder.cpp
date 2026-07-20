@@ -11,11 +11,19 @@ void PcxDecoder::extract_image_meta(BinaryDataView &buffer) {
   image_.frame_width = buffer.read_le_ui32();
   image_.frame_height = buffer.read_le_ui32();
 
-  image_.width = buffer.read_le_ui32();
-  image_.height = buffer.read_le_ui32();
+  if (is_legacy_format_) {
+    image_.width = image_.frame_width;
+    image_.height = image_.frame_height;
 
-  image_.x = buffer.read_le_ui32();
-  image_.y = buffer.read_le_ui32();
+    image_.x = 0;
+    image_.y = 0;
+  } else {
+    image_.width = buffer.read_le_ui32();
+    image_.height = buffer.read_le_ui32();
+
+    image_.x = buffer.read_le_ui32();
+    image_.y = buffer.read_le_ui32();
+  }
 }
 
 PaletteIndices PcxDecoder::get_palette_indices(BinaryDataView &buffer,

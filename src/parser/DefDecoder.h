@@ -17,6 +17,10 @@ private:
 
   void extract_header_data(BinaryDataView &buffer);
   void extract_palette(BinaryDataView &buffer);
+  // Legacy DEF frames don't have `width`, `height`, `x`, `y` in header
+  bool is_legacy_def(BinaryDataView &buffer,
+                     std::vector<uint32_t> &image_sizes,
+                     std::vector<uint32_t> &image_offsets);
 
   std::string get_animation_group_name(uint32_t group_type);
   std::vector<std::string> get_image_names(BinaryDataView &buffer, uint32_t frame_count);

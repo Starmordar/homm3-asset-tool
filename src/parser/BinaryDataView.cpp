@@ -75,6 +75,10 @@ size_t BinaryDataView::tell() {
   return byte_offset;
 }
 
+size_t BinaryDataView::size() {
+  return _bytes.size();
+}
+
 void BinaryDataView::seek(size_t offset) {
   if (offset > _bytes.size())
     throw std::out_of_range("BinaryDataView: seek out of range");

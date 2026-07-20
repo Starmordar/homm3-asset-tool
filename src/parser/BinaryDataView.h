@@ -24,6 +24,7 @@ public:
   void skip(size_t byte_count);
   std::string read_string(size_t char_count);
   size_t tell();
+  size_t size();
   void seek(size_t offset);
   template <typename T> std::vector<T> loop(size_t times);
   template <typename T> void loop(size_t times, std::vector<T> &buffer);
