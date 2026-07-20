@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "lib/aligment.h"
+#include "lib/alignment.h"
 
 namespace FileFormats {
   namespace Lod {

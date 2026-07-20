@@ -5,7 +5,7 @@
 
 #include "FileFormats.h"
 #include "lib/palette.h"
-#include <lib/aligment.h>
+#include <lib/alignment.h>
 
 namespace fs = std::filesystem;
 

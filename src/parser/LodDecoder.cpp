@@ -73,10 +73,6 @@ LodDecoder::decode_entries(std::ifstream &stream, const FileFormats::Lod::LodHea
     if (!FileTypes::type_name_map.contains(entry_file.header.file_type))
       continue;
 
-    // TODO: Remove, temporary for debug
-    if (std::strcmp(entry_file.header.name, "SGTWMTA.def"))
-      continue;
-
     const auto base_offset = stream.tellg();
     stream.seekg(entry_file.header.offset);
 

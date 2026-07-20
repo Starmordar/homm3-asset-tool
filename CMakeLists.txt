@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.50)
 
 project(sprite-extractor)
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 set(
     sprite_extractor_SRCS
@@ -14,7 +15,7 @@ set(
 
 set(
     sprite_extractor_HEADERS
-        src/lib/aligment.h
+        src/lib/alignment.h
         src/lib/palette.h
         src/lib/file_types.h
         src/parser/FileFormats.h

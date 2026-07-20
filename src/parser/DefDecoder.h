@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <string>
 
@@ -13,7 +14,7 @@ private:
   static constexpr int image_name_length{13};
 
   FileFormats::Def::DefHeader def_header_;
-  std::vector<Palette::Color> palette_{};
+  std::array<Palette::Color, 256> palette_;
 
   void extract_header_data(BinaryDataView &buffer);
   void extract_palette(BinaryDataView &buffer);

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <optional>
 #include <vector>
@@ -24,7 +25,7 @@ private:
   static constexpr uint8_t RLE_HEIGHT_ORIENTED_first_byte{0x7};
   static constexpr uint8_t RLE_BLOCK_ORIENTED_first_byte{0x7};
 
-  std::vector<Palette::Color> palette_{};
+  std::array<Palette::Color, 256> palette_{};
   bool is_legacy_format_{false};
   Image image_{};
 
@@ -49,7 +50,7 @@ private:
   void extract_bitmap(BinaryDataView &buffer, PaletteIndices &palette_indices);
 
 public:
-  explicit PcxDecoder(std::vector<Palette::Color> palette, bool is_legacy_format)
+  explicit PcxDecoder(std::array<Palette::Color, 256> palette, bool is_legacy_format)
       : palette_(palette), is_legacy_format_(is_legacy_format) {};
 
   Image decode(BinaryDataView &buffer);

@@ -12,7 +12,9 @@
 #include "lib/palette.h"
 
 std::string DefDecoder::get_animation_group_name(uint32_t group_type) {
-  if (!FileTypes::animation_groups.contains(def_header_.type)) {
+  const auto group = FileTypes::animation_groups.find(def_header_.type);
+
+  if (group == FileTypes::animation_groups.end()) {
     if (group_type == 0)
       return "all";
 
@@ -20,8 +22,9 @@ std::string DefDecoder::get_animation_group_name(uint32_t group_type) {
     return "";
   }
 
-  if (FileTypes::animation_groups.at(def_header_.type).size() > group_type)
-    return FileTypes::animation_groups.at(def_header_.type).at(group_type);
+  const auto &group_names = group->second;
+  if (group_names.size() > group_type)
+    return group_names[group_type];
   else
     std::cerr << "DefDecoder: Unknown animation type";
 
@@ -30,6 +33,7 @@ std::string DefDecoder::get_animation_group_name(uint32_t group_type) {
 
 std::vector<std::string> DefDecoder::get_image_names(BinaryDataView &buffer, uint32_t frame_count) {
   std::vector<std::string> image_names{};
+  image_names.reserve(frame_count);
 
   for (size_t i = 0; i < frame_count; ++i) {
     std::string name = buffer.read_string(image_name_length);
@@ -51,6 +55,7 @@ std::vector<uint32_t> DefDecoder::get_image_offsets(BinaryDataView &buffer, uint
 std::vector<uint32_t> DefDecoder::get_image_sizes(BinaryDataView &buffer,
                                                   std::vector<uint32_t> &offsets) {
   std::vector<uint32_t> sizes{};
+  sizes.reserve(offsets.size());
 
   for (size_t i = 0; i < offsets.size(); ++i) {
     buffer.seek(offsets[i]);
@@ -101,7 +106,6 @@ FileFormats::Def::DefFile DefDecoder::decode_animation_groups(BinaryDataView &bu
       buffer.seek(image_offsets[i]);
 
       PcxDecoder pcx_decoder{palette_, is_legacy_format};
-
       const FileFormats::Def::PcxImage image = pcx_decoder.decode(buffer);
       def_file.images[image_names[i]] = image;
 
@@ -113,11 +117,13 @@ FileFormats::Def::DefFile DefDecoder::decode_animation_groups(BinaryDataView &bu
 }
 
 void DefDecoder::extract_header_data(BinaryDataView &buffer) {
-  uint32_t type = buffer.read_le_ui32();
-  assert(FileTypes::type_name_map.contains(type) &&
+  const uint32_t type = buffer.read_le_ui32();
+  const auto type_name = FileTypes::type_name_map.find(type);
+
+  assert(type_name != FileTypes::type_name_map.end() &&
          "DefDecoder: unsupported file type (expected a .def file)");
 
-  def_header_.type = FileTypes::type_name_map.at(type);
+  def_header_.type = type_name->second;
   def_header_.frame_width = buffer.read_le_ui32();
   def_header_.frame_height = buffer.read_le_ui32();
   def_header_.group_count = buffer.read_le_ui32();
@@ -125,15 +131,15 @@ void DefDecoder::extract_header_data(BinaryDataView &buffer) {
 
 void DefDecoder::extract_palette(BinaryDataView &buffer) {
   for (size_t i = 0; i < 256; i++) {
-    palette_.push_back({buffer.read_ui8(), buffer.read_ui8(), buffer.read_ui8(), 255});
+    palette_[i] = {buffer.read_ui8(), buffer.read_ui8(), buffer.read_ui8(), 255};
 
-    if (Palette::predefined_palette_indices.contains(i))
-      palette_[i] = Palette::predefined_palette_indices.at(i);
+    const auto predefined = Palette::predefined_palette_indices.find(i);
+    if (predefined != Palette::predefined_palette_indices.end())
+      palette_[i] = predefined->second;
   }
 }
 
 FileFormats::Def::DefFile DefDecoder::decode(FileFormats::Lod::EntryFile &entry_file) {
-  std::cout << "Start decoding for: " << entry_file.header.name << '\n';
   BinaryDataView buffer{entry_file.data};
 
   extract_header_data(buffer);
@@ -142,8 +148,6 @@ FileFormats::Def::DefFile DefDecoder::decode(FileFormats::Lod::EntryFile &entry_
   FileFormats::Def::DefFile def_file = decode_animation_groups(buffer);
   def_file.name = std::string(entry_file.header.name);
   def_file.header = def_header_;
-
-  std::cout << "Finish decoding for: " << entry_file.header.name << '\n';
 
   return def_file;
 }

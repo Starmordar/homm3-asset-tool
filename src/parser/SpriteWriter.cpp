@@ -1,5 +1,4 @@
 #include <filesystem>
-#include <iostream>
 #include <string_view>
 #include <vector>
 
@@ -44,12 +43,10 @@ void SpriteWriter::write_sprite(FileFormats::Def::DefFile &def_file,
 
 void SpriteWriter::write(std::vector<FileFormats::Def::DefFile> &def_files) {
   for (size_t i = 0; i < def_files.size(); i++) {
-    std::cout << "Start processing " << def_files[i].name << std::endl;
     std::string folder_name = create_def_folder(def_files[i].name);
 
     for (auto &[group_name, image_names] : def_files[i].groups) {
       write_sprite(def_files[i], group_name, image_names, folder_name);
     }
-    std::cout << "Finish processing " << def_files[i].name << std::endl;
   }
 }

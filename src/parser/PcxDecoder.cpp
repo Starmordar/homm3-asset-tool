@@ -44,6 +44,7 @@ PaletteIndices PcxDecoder::get_palette_indices(BinaryDataView &buffer,
 
 PaletteIndices PcxDecoder::decompress_plain(BinaryDataView &buffer) {
   PaletteIndices palette_indices{};
+  palette_indices.reserve(image_.height * image_.width);
 
   buffer.loop(image_.height * image_.width, palette_indices);
 
@@ -52,6 +53,8 @@ PaletteIndices PcxDecoder::decompress_plain(BinaryDataView &buffer) {
 
 PaletteIndices PcxDecoder::decompress_rle(BinaryDataView &buffer) {
   PaletteIndices palette_indices{};
+  palette_indices.reserve(image_.width * image_.height);
+
   const auto base_offset = buffer.tell();
 
   std::vector<uint32_t> offsets = buffer.loop<uint32_t>(image_.height);
@@ -79,6 +82,8 @@ PaletteIndices PcxDecoder::decompress_rle(BinaryDataView &buffer) {
 
 PaletteIndices PcxDecoder::decompress_rle_height_oriented(BinaryDataView &buffer) {
   PaletteIndices palette_indices{};
+  palette_indices.reserve(image_.width * image_.height);
+
   const auto base_offset = buffer.tell();
   uint16_t currect_offset = buffer.read_le_ui16();
 
@@ -107,6 +112,8 @@ PaletteIndices PcxDecoder::decompress_rle_height_oriented(BinaryDataView &buffer
 
 PaletteIndices PcxDecoder::decompress_rle_block_oriented(BinaryDataView &buffer) {
   PaletteIndices palette_indices{};
+  palette_indices.reserve(image_.width * image_.height);
+
   const auto base_offset = buffer.tell();
 
   for (size_t i = 0; i < image_.height; ++i) {
@@ -147,7 +154,7 @@ void PcxDecoder::extract_bitmap(BinaryDataView &buffer, PaletteIndices &palette_
 
     for (size_t j = 0; j < image_.width; j++) {
       uint32_t index = palette_indices[i * image_.width + j];
-      Palette::Color color{palette_[index]};
+      const auto &color{palette_[index]};
 
       uint32_t pixel_offset = start + j * 4;
       bitmap[pixel_offset] = color.r;
