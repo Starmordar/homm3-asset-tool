@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -7,7 +8,7 @@
 
 class SpriteWriter {
 private:
-  static constexpr std::string ouput_dir{"output/"};
+  std::filesystem::path output_dir_;
 
   std::string create_def_folder(std::string_view filename);
   void write_sprite(FileFormats::Def::DefFile &def_file,
@@ -16,6 +17,6 @@ private:
                     std::string folder_name);
 
 public:
-  SpriteWriter() = default;
+  explicit SpriteWriter(std::string_view output_dir) : output_dir_(output_dir) {};
   void write(std::vector<FileFormats::Def::DefFile> &def_files);
 };

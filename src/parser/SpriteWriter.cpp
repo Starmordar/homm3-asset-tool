@@ -13,7 +13,7 @@ std::string SpriteWriter::create_def_folder(std::string_view filename) {
   fs::path path(filename);
   std::string folder_name = path.stem().string();
 
-  fs::create_directory(ouput_dir + folder_name);
+  fs::create_directory(output_dir_ / folder_name);
   return folder_name;
 }
 
@@ -33,7 +33,7 @@ void SpriteWriter::write_sprite(FileFormats::Def::DefFile &def_file,
     }
   }
 
-  fs::path path{ouput_dir + folder_name + '/' + group_name};
+  fs::path path{output_dir_ / folder_name / group_name};
   path.replace_extension(".png");
 
   stbi_write_png(path.c_str(), def_file.header.frame_width * image_names.size(),

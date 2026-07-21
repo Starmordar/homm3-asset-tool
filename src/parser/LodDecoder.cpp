@@ -64,7 +64,7 @@ std::vector<FileFormats::Def::DefFile>
 LodDecoder::decode_entries(std::ifstream &stream, const FileFormats::Lod::LodHeader &lod_header) {
   std::vector<FileFormats::Def::DefFile> def_files{};
 
-  for (uint32_t i = 0; i < lod_header.files_count; ++i) {
+  for (uint32_t i = 0; i < 10; ++i) {
     FileFormats::Lod::EntryFile entry_file{};
     entry_file.header = extract_entry_header(stream);
     entry_file.data.resize(entry_file.header.uncompressed_size);
